@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "baseUrl": ".",
+        "outDir": "out",
         "sourceMap": true,
         "target": "ES2019",
         "strict": true,
