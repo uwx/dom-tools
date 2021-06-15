@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "sourceMap": true,
+        "target": "ES2019",
+        "strict": true,
+        "module": "CommonJS",
+        "moduleResolution": "node",
+        "preserveConstEnums": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "resolveJsonModule": true,
+        "lib": [ "ESNext", "DOM", "DOM.Iterable" ]
+    },
+    "include": [
+        "./*.ts",
+        "./*.json"
+    ]
+}
