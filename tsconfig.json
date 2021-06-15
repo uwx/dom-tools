@@ -5,7 +5,7 @@
         "sourceMap": true,
         "target": "ES2019",
         "strict": true,
-        "module": "CommonJS",
+        "module": "none",
         "moduleResolution": "node",
         "preserveConstEnums": true,
         "esModuleInterop": true,
