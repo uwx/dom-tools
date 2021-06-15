@@ -1,6 +1,6 @@
 // ------------
 //
-// [DOMTools]
+// [DOMTools] revision 3
 // a fairly optimized DOM manipulation library. vaguely inspired by jQuery syntax. performance is a main focus.
 //
 // ------------
