@@ -1,0 +1,13 @@
+{
+    "extends": "../tsconfig.json",
+
+    "compilerOptions": {
+        "outFile": null,
+        "outDir": "../out/browser",
+        "module": "ES2020"
+    },
+    "include": [
+        "../*.ts",
+        "../*.json"
+    ]
+}

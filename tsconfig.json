@@ -1,19 +1,15 @@
 {
     "compilerOptions": {
         "baseUrl": ".",
-        "outFile": "./out/browser/dom-tools.js",
         "sourceMap": true,
         "target": "ES2019",
         "strict": true,
-        "module": "none",
         "moduleResolution": "node",
         "preserveConstEnums": true,
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
-        "lib": [ "ESNext", "DOM", "DOM.Iterable" ]
-    },
-    "include": [
-        "./*.ts",
-        "./*.json"
-    ]
+        "lib": [ "ESNext", "DOM", "DOM.Iterable" ],
+        // Generate d.ts files
+        "declaration": true
+    }
 }

@@ -26,4 +26,4 @@ jobs:
         user-name: "actions-user"
         user-email: "action@github.com"
         message: "Automatically built typescript"
-        directories: ./, ./commonjs
+        directories: ./browser, ./commonjs
