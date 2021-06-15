@@ -11,7 +11,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -21,14 +20,10 @@ jobs:
       uses: actions/setup-node@v2.1.4
       with:
         node-version: 12
-    - name: TypeScript Build
-      # You may pin to the exact commit or the version.
-      # uses: alexthemaster/action-build-typescript@ca4abf142f236aba57ae954c4f10615b006d1e6e
-      uses: alexthemaster/action-build-typescript@v1.2.1
+    - name: Building Typescript
+      uses: FuLagann/tsc-build-push@v1
       with:
-        # Whether or not to push the compiled code to a different branch
-        pushToBranch: true # optional
-        # The name of the branch the action should push the compiled code
-        branch: dist # optional, default is dist
-        # Your GitHub secret token
-        githubToken: ${{ secrets.GITHUB_TOKEN }} # optional
+        user-name: "actions-user"
+        user-email: "action@github.com"
+        message: "Automatically built typescript"
+        directories: ./, ./commonjs
