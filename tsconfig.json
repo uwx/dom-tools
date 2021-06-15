@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "baseUrl": ".",
-        "outDir": "out",
+        "outFile": "./out/browser/dom-tools.js",
         "sourceMap": true,
         "target": "ES2019",
         "strict": true,
