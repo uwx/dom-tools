@@ -19,3 +19,7 @@ its properties to `Window` like this:
     }
 </script>
 ```
+
+## Documentation
+
+JSDoc not available yet, check the .ts file for documentation comments.
