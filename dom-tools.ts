@@ -300,7 +300,7 @@ export namespace $d {
 
 const whitespaceRegex = /[^\x20\t\r\n\f]+/g;
 export abstract class BaseContainer<TElement extends Element> {
-    _originalDisplay?: string;
+    private originalDisplay?: string;
 
     /**
      * Returns an iterable containing the elements represented by this container. If there is only one element, returns
@@ -596,14 +596,14 @@ export abstract class BaseContainer<TElement extends Element> {
 
     // POSSIBLE ISSUE: only stores display for the first matched element
     hide() {
-        this._originalDisplay = this.css('display');
+        this.originalDisplay = this.css('display');
         this.css('display', 'none');
         return this;
     }
 
     show() {
-        this.css('display', this._originalDisplay || '');
-        delete this._originalDisplay;
+        this.css('display', this.originalDisplay || '');
+        delete this.originalDisplay;
         return this;
     }
 
