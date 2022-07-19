@@ -74,7 +74,7 @@ export declare namespace $d {
     let verbose: boolean;
 }
 export declare abstract class BaseContainer<TElement extends Element> {
-    _originalDisplay?: string;
+    private originalDisplay?;
     /**
      * Returns an iterable containing the elements represented by this container. If there is only one element, returns
      * an array containing a single entry. If there are no elements, returns an empty array.

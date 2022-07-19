@@ -442,13 +442,13 @@ export class BaseContainer {
     }
     // POSSIBLE ISSUE: only stores display for the first matched element
     hide() {
-        this._originalDisplay = this.css('display');
+        this.originalDisplay = this.css('display');
         this.css('display', 'none');
         return this;
     }
     show() {
-        this.css('display', this._originalDisplay || '');
-        delete this._originalDisplay;
+        this.css('display', this.originalDisplay || '');
+        delete this.originalDisplay;
         return this;
     }
     css(property, value) {
