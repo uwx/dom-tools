@@ -93,7 +93,7 @@ export function $element(selector, root, alwaysQuerySelector, rootIsDocument) {
         case '#': // fast-track #id
             if (rootIsDocument && isValidCssIdentifierOffsetBy1(selector)) {
                 const foundElement = document.getElementById(selector.slice(1));
-                return foundElement !== null ? new ElementContainer(foundElement) : crashOrDefault(EmptyContainer, 'No match for ' + selector);
+                return foundElement !== null ? new ElementContainer(foundElement) : crashOrDefault(EmptyContainer.instance, 'No match for ' + selector);
             }
             break;
         case '[': // fast-track [name="foobar"]
@@ -121,7 +121,7 @@ export function $element(selector, root, alwaysQuerySelector, rootIsDocument) {
     if ($d.allowQuerySelector) {
         return new ElementListContainer(root.querySelectorAll(selector));
     }
-    return crashOrDefault(EmptyContainer, 'Argument must be a CSS selector or <tag>, was ' + selector);
+    return crashOrDefault(EmptyContainer.instance, 'Argument must be a CSS selector or <tag>, was ' + selector);
 }
 /**
  * Delays a function's execution to when the DOM loads, but before all images and media are loaded
@@ -161,7 +161,7 @@ export function $wrap(obj) {
         return new ElementListContainer(obj);
     }
     // TODO generic documents/windows?
-    return crashOrDefault(EmptyContainer, 'Unknown object type ' + obj.prototype);
+    return crashOrDefault(EmptyContainer.instance, 'Unknown object type ' + obj.prototype);
 }
 export function $d(arg) {
     switch (typeof arg) {
@@ -212,6 +212,12 @@ export class BaseContainer {
         return this.elements[index]; // can be overriden if elements is not an array
     }
     /**
+     * @returns Whether or not the current {@link BaseContainer} contains at least one element.
+     */
+    isEmpty() {
+        return this.element !== null;
+    }
+    /**
      * Throws an error if this node contains no elements, and returns the current object otherwise. Methods that operate
      * on this.elements will never throw if the list is empty, so this is an option.
      */
@@ -228,6 +234,9 @@ export class BaseContainer {
     narrowNotEmpty() {
         this.throwIfEmpty();
     }
+    /**
+     * Gets the dataset of the first element in this container.
+     */
     get data() {
         this.narrowNotEmpty();
         if (!('dataset' in this.element)) {
@@ -235,6 +244,11 @@ export class BaseContainer {
         }
         return this.element.dataset;
     }
+    /**
+     * Performs an operation on the first element's dataset.
+     * @param operation The function to execute
+     * @returns The current container
+     */
     withData(operation) {
         operation(this.data);
         return this;
@@ -249,6 +263,10 @@ export class BaseContainer {
         }
         return (_b = (_a = this.element) === null || _a === void 0 ? void 0 : _a.innerHTML) !== null && _b !== void 0 ? _b : crashOrDefault('');
     }
+    /**
+     * Deletes all contents of the elements in this container.
+     * @returns The current container
+     */
     empty() {
         return this.html('');
     }
@@ -267,11 +285,11 @@ export class BaseContainer {
         }
         else if (arg instanceof BaseContainer) {
             for (const el of arg.elements) {
-                this.element.appendChild(el);
+                this.element.append(el);
             }
         }
         else if (arg instanceof Node) {
-            this.element.appendChild(arg);
+            this.element.append(arg);
         }
         else {
             return crashOrDefault(this, 'Unsupported argument type, must be Node or DOMTools node or array thereof');
@@ -296,13 +314,13 @@ export class BaseContainer {
         else if (arg instanceof BaseContainer) {
             for (const ownEl of this.elements) {
                 for (const el of arg.elements) {
-                    ownEl.appendChild(el.cloneNode(true));
+                    ownEl.append(el.cloneNode(true));
                 }
             }
         }
         else if (arg instanceof Node) {
             for (const el of this.elements) {
-                el.appendChild(arg.cloneNode(true));
+                el.append(arg.cloneNode(true));
             }
         }
         else {
@@ -312,7 +330,7 @@ export class BaseContainer {
     }
     appendText(text) {
         for (const el of this.elements) {
-            el.appendChild(document.createTextNode(text));
+            el.append(text);
         }
         return this;
     }
@@ -348,10 +366,16 @@ export class BaseContainer {
         }
         return this;
     }
-    // TODO support same as above & add toggleClass
+    // TODO support same as above
     removeClass(dropClass) {
         for (const el of this.elements) {
             el.classList.remove(dropClass);
+        }
+        return this;
+    }
+    toggleClass(toggleClass) {
+        for (const el of this.elements) {
+            el.classList.toggle(toggleClass);
         }
         return this;
     }
@@ -442,11 +466,15 @@ export class BaseContainer {
     }
     // POSSIBLE ISSUE: only stores display for the first matched element
     hide() {
+        if (this.isEmpty())
+            return;
         this.originalDisplay = this.css('display');
         this.css('display', 'none');
         return this;
     }
     show() {
+        if (this.isEmpty())
+            return;
         this.css('display', this.originalDisplay || '');
         delete this.originalDisplay;
         return this;
@@ -532,15 +560,19 @@ export class BaseContainer {
     mouseleave(callback, useCapture) { return this._eventFunction('mouseleave', callback, useCapture); }
     unload(callback, useCapture) { return this._eventFunction('unload', callback, useCapture); }
 }
-const _emptyArray = [];
 class EmptyContainer extends BaseContainer {
+    constructor() {
+        super();
+    }
     get elements() {
-        return _emptyArray;
+        return EmptyContainer.emptyArray;
     }
     get element() {
         return null;
     }
 }
+EmptyContainer.instance = new EmptyContainer();
+EmptyContainer.emptyArray = [];
 class ElementContainer extends BaseContainer {
     constructor(element) {
         super();
@@ -557,7 +589,7 @@ class ElementContainer extends BaseContainer {
         return new ElementListContainer(this.element.children);
     }
     parent() {
-        return this.element.parentElement !== null ? new ElementContainer(this.element.parentElement) : crashOrDefault(EmptyContainer, 'Element lacks a parent');
+        return this.element.parentElement !== null ? new ElementContainer(this.element.parentElement) : crashOrDefault(EmptyContainer.instance, 'Element lacks a parent');
         ;
     }
     find(selector, alwaysQuerySelector) {

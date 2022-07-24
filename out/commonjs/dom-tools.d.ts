@@ -90,6 +90,12 @@ export declare abstract class BaseContainer<TElement extends Element> {
      */
     get(index: number): TElement | null;
     /**
+     * @returns Whether or not the current {@link BaseContainer} contains at least one element.
+     */
+    isEmpty(): this is {
+        element: TElement;
+    };
+    /**
      * Throws an error if this node contains no elements, and returns the current object otherwise. Methods that operate
      * on this.elements will never throw if the list is empty, so this is an option.
      */
@@ -105,10 +111,29 @@ export declare abstract class BaseContainer<TElement extends Element> {
         element: TElement;
         elements: ElementListWithElement<TElement>;
     };
+    /**
+     * Gets the dataset of the first element in this container.
+     */
     get data(): Record<string, string | undefined>;
+    /**
+     * Performs an operation on the first element's dataset.
+     * @param operation The function to execute
+     * @returns The current container
+     */
     withData(operation: (dataset: Record<string, string | undefined>) => void): this;
+    /**
+     * Sets the element's inner HTML to a provided string.
+     * @param string The inner HTML to be set
+     */
     html(string: string): this;
+    /**
+     * Gets the element's inner HTML.
+     */
     html(): string;
+    /**
+     * Deletes all contents of the elements in this container.
+     * @returns The current container
+     */
     empty(): this;
     append(arg: string | Node | BaseContainer<Element> | Array<string | Node | BaseContainer<Element>>): this;
     appendToAll(arg: string | Node | BaseContainer<Element> | Array<string | Node | BaseContainer<Element>>): this;
@@ -117,6 +142,7 @@ export declare abstract class BaseContainer<TElement extends Element> {
     attr(name: string, value: string): this;
     addClass(class1: string, ...otherClasses: string[]): this;
     removeClass(dropClass: string): this;
+    toggleClass(toggleClass: string): this;
     children(): ElementListContainer<Element>;
     parent(): BaseContainer<Element>;
     find<T extends ElementsInBrackets<HTMLElementTagNameMap>, K extends keyof T>(selector: T, alwaysQuerySelector?: boolean): T[K];
@@ -135,8 +161,8 @@ export declare abstract class BaseContainer<TElement extends Element> {
     map<T>(callback: (el: Element, index: number, elements: ElementList<TElement>) => T): T[];
     $each(callback: (el: BaseContainer<TElement>, index: number, elements: ElementList<TElement>) => void): this;
     $map(callback: (el: BaseContainer<TElement>, index: number, elements: ElementList<TElement>) => BaseContainer<Element> | Element): BaseContainer<Element>;
-    hide(): this;
-    show(): this;
+    hide(): this | undefined;
+    show(): this | undefined;
     css(property: keyof CSSStyleDeclaration & string): string;
     css(property: keyof CSSStyleDeclaration & string, value: string): this;
     clearChildren(): this;
@@ -168,11 +194,14 @@ export declare abstract class BaseContainer<TElement extends Element> {
     unload(callback: EventListenerOrEventListenerObject, useCapture?: boolean | AddEventListenerOptions): this;
 }
 declare class EmptyContainer<TElement extends Element> extends BaseContainer<TElement> {
+    static readonly instance: EmptyContainer<Element>;
+    private static readonly emptyArray;
+    private constructor();
     get elements(): ElementList<any>;
     get element(): null;
 }
 declare class ElementContainer<TElement extends Element> extends BaseContainer<TElement> {
-    _elements: TElement[];
+    private _elements;
     constructor(element: TElement);
     get element(): TElement;
     get elements(): TElement[];
@@ -189,12 +218,12 @@ declare class ElementContainer<TElement extends Element> extends BaseContainer<T
     $map(callback: (el: this, index: number, elements: TElement[]) => ElementContainer<Element> | Element): ElementContainer<Element>;
 }
 export declare class ElementListContainer<TElement extends Element> extends BaseContainer<TElement> {
-    _elements: ElementList<TElement>;
+    private _elements;
     constructor(elements: ElementList<TElement>);
     get elements(): ElementList<TElement>;
 }
 export declare class EventTargetContainer<TEventTarget extends EventTarget, TElement extends Element> extends ElementContainer<TElement> {
-    _eventTarget: TEventTarget;
+    private _eventTarget;
     constructor(eventTarget: TEventTarget, element: TElement);
     on<K extends keyof ElementEventMap>(type: K, listener: (this: Element, ev: ElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): this;
     on(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): this;
