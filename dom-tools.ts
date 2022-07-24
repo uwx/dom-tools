@@ -125,7 +125,7 @@ export function $element(selector: string, root: Element | Document, alwaysQuery
         case '#': // fast-track #id
             if (rootIsDocument && isValidCssIdentifierOffsetBy1(selector)) {
                 const foundElement = document.getElementById(selector.slice(1));
-                return foundElement !== null ? new ElementContainer(foundElement) : crashOrDefault(EmptyContainer, 'No match for ' + selector);
+                return foundElement !== null ? new ElementContainer(foundElement) : crashOrDefault(EmptyContainer.instance, 'No match for ' + selector);
             }
             break;
         case '[': // fast-track [name="foobar"]
@@ -156,7 +156,7 @@ export function $element(selector: string, root: Element | Document, alwaysQuery
         return new ElementListContainer(root.querySelectorAll(selector));
     }
 
-    return crashOrDefault(EmptyContainer, 'Argument must be a CSS selector or <tag>, was ' + selector);
+    return crashOrDefault(EmptyContainer.instance, 'Argument must be a CSS selector or <tag>, was ' + selector);
 }
 
 /**
@@ -214,7 +214,7 @@ export function $wrap<T extends Element>(obj: T | ElementList<T> | BaseContainer
 
     // TODO generic documents/windows?
 
-    return crashOrDefault<EmptyContainer<T>>(EmptyContainer, 'Unknown object type ' + (obj as any).prototype);
+    return crashOrDefault<EmptyContainer<T>>(EmptyContainer.instance as EmptyContainer<T>, 'Unknown object type ' + (obj as any).prototype);
 }
 
 /**
@@ -324,6 +324,13 @@ export abstract class BaseContainer<TElement extends Element> {
     }
 
     /**
+     * @returns Whether or not the current {@link BaseContainer} contains at least one element.
+     */
+    isEmpty(): this is { element: TElement } {
+        return this.element !== null;
+    }
+
+    /**
      * Throws an error if this node contains no elements, and returns the current object otherwise. Methods that operate
      * on this.elements will never throw if the list is empty, so this is an option.
      */
@@ -342,6 +349,9 @@ export abstract class BaseContainer<TElement extends Element> {
         this.throwIfEmpty();
     }
 
+    /**
+     * Gets the dataset of the first element in this container.
+     */
     get data(): Record<string, string | undefined> {
         this.narrowNotEmpty();
         if (!('dataset' in this.element)) {
@@ -350,12 +360,24 @@ export abstract class BaseContainer<TElement extends Element> {
         return (this.element as HTMLOrSVGElement).dataset;
     }
 
+    /**
+     * Performs an operation on the first element's dataset.
+     * @param operation The function to execute
+     * @returns The current container
+     */
     withData(operation: (dataset: Record<string, string | undefined>) => void): this {
         operation(this.data);
         return this;
     }
 
+    /**
+     * Sets the element's inner HTML to a provided string.
+     * @param string The inner HTML to be set
+     */
     html(string: string): this;
+    /**
+     * Gets the element's inner HTML.
+     */
     html(): string;
     html(string?: string): this | string {
         if (string !== undefined) {
@@ -368,6 +390,10 @@ export abstract class BaseContainer<TElement extends Element> {
         return this.element?.innerHTML ?? crashOrDefault('');
     }
 
+    /**
+     * Deletes all contents of the elements in this container.
+     * @returns The current container
+     */
     empty(): this {
         return this.html('');
     }
@@ -388,10 +414,10 @@ export abstract class BaseContainer<TElement extends Element> {
             }
         } else if (arg instanceof BaseContainer) {
             for (const el of arg.elements) {
-                this.element.appendChild(el);
+                this.element.append(el);
             }
         } else if (arg instanceof Node) {
-            this.element.appendChild(arg);
+            this.element.append(arg);
         } else {
             return crashOrDefault(this, 'Unsupported argument type, must be Node or DOMTools node or array thereof');
         }
@@ -418,12 +444,12 @@ export abstract class BaseContainer<TElement extends Element> {
         } else if (arg instanceof BaseContainer) {
             for (const ownEl of this.elements) {
                 for (const el of arg.elements) {
-                    ownEl.appendChild(el.cloneNode(true));
+                    ownEl.append(el.cloneNode(true));
                 }
             }
         } else if (arg instanceof Node) {
             for (const el of this.elements) {
-                el.appendChild(arg.cloneNode(true));
+                el.append(arg.cloneNode(true));
             }
         } else {
             return crashOrDefault(this, 'Unsupported argument type, must be element or DOMTools node or array thereof');
@@ -434,7 +460,7 @@ export abstract class BaseContainer<TElement extends Element> {
 
     appendText(text: string): this {
         for (const el of this.elements) {
-            el.appendChild(document.createTextNode(text));
+            el.append(text);
         }
         return this;
     }
@@ -473,7 +499,7 @@ export abstract class BaseContainer<TElement extends Element> {
         return this;
     }
 
-    // TODO support same as above & add toggleClass
+    // TODO support same as above
     removeClass(dropClass: string): this {
         for (const el of this.elements) {
             el.classList.remove(dropClass);
@@ -481,8 +507,15 @@ export abstract class BaseContainer<TElement extends Element> {
         return this;
     }
 
+    toggleClass(toggleClass: string): this {
+        for (const el of this.elements) {
+            el.classList.toggle(toggleClass);
+        }
+        return this;
+    }
+
     children(): ElementListContainer<Element> {
-        const allChildren = [];
+        const allChildren: Element[] = [];
 
         for (const el of this.elements) {
             allChildren.push(...(el.children as unknown as Iterable<Element>));
@@ -596,12 +629,14 @@ export abstract class BaseContainer<TElement extends Element> {
 
     // POSSIBLE ISSUE: only stores display for the first matched element
     hide() {
+        if (this.isEmpty()) return;
         this.originalDisplay = this.css('display');
         this.css('display', 'none');
         return this;
     }
 
     show() {
+        if (this.isEmpty()) return;
         this.css('display', this.originalDisplay || '');
         delete this.originalDisplay;
         return this;
@@ -718,10 +753,17 @@ export abstract class BaseContainer<TElement extends Element> {
     unload(callback: EventListenerOrEventListenerObject, useCapture?: boolean | AddEventListenerOptions) { return this._eventFunction('unload', callback, useCapture); }
 }
 
-const _emptyArray: ElementList<any> = [];
 class EmptyContainer<TElement extends Element> extends BaseContainer<TElement> {
+    static readonly instance: EmptyContainer<Element> = new EmptyContainer();
+
+    private static readonly emptyArray: ElementList<any> = [];
+
+    private constructor() {
+        super();
+    }
+
     get elements() {
-        return _emptyArray;
+        return EmptyContainer.emptyArray;
     }
     get element() {
         return null;
@@ -729,7 +771,7 @@ class EmptyContainer<TElement extends Element> extends BaseContainer<TElement> {
 }
 
 class ElementContainer<TElement extends Element> extends BaseContainer<TElement> {
-    _elements: TElement[];
+    private _elements: TElement[];
 
     constructor(element: TElement) {
         super();
@@ -750,7 +792,7 @@ class ElementContainer<TElement extends Element> extends BaseContainer<TElement>
     }
 
     parent(): ElementContainer<Element> | EmptyContainer<Element> {
-        return this.element.parentElement !== null ? new ElementContainer(this.element.parentElement) : crashOrDefault(EmptyContainer, 'Element lacks a parent');;
+        return this.element.parentElement !== null ? new ElementContainer(this.element.parentElement) : crashOrDefault(EmptyContainer.instance, 'Element lacks a parent');;
     }
 
     find<T extends ElementsInBrackets<HTMLElementTagNameMap>, K extends keyof T>(selector: T, alwaysQuerySelector?: boolean): T[K];
@@ -786,7 +828,8 @@ class ElementContainer<TElement extends Element> extends BaseContainer<TElement>
 }
 
 export class ElementListContainer<TElement extends Element> extends BaseContainer<TElement> {
-    _elements: ElementList<TElement>;
+    private _elements: ElementList<TElement>;
+
     // elements: NodeList, Array, anything with a length property and indexer, except DOMNodeCollection, or array of DOMBaseNode
     constructor(elements: ElementList<TElement>) {
         super();
@@ -799,7 +842,7 @@ export class ElementListContainer<TElement extends Element> extends BaseContaine
 
 // special case- a DOMNode that isn't really a DOMNode, just an EventTarget with a node representation elsewhere
 export class EventTargetContainer<TEventTarget extends EventTarget, TElement extends Element> extends ElementContainer<TElement> {
-    _eventTarget: TEventTarget;
+    private _eventTarget: TEventTarget;
 
     constructor(eventTarget: TEventTarget, element: TElement) {
         super(element);
